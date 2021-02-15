@@ -1,9 +1,13 @@
 'use strict';
 
+import Client from "../lib/client.js";
+
 window.addEventListener('load', (evnt) => {
     main();
 });
 
 function main(){
-    console.log('Started');
+    let config = {};
+    let client = new Client(config);
+    client.start();
 }
