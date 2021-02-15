@@ -1,0 +1,21 @@
+{
+  "name": "pool",
+  "version": "0.0.1",
+  "description": "A simple deathmatch style io game with traditional pool mechanics.",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app",
+    "dev": "nodemon app"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knapdev/pool.git"
+  },
+  "author": "KnapDev",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.7"
+  }
+}
