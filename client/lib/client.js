@@ -56,7 +56,7 @@ class Client{
                 // create and add players to world
                 for(let i in pack.players){
                     let other = pack.players[i];
-                    let player = new Player(other.uuid, other.name, new Vector2(other.position.x, other.position.y));
+                    let player = new Player(other.uuid, this.world, other.name, new Vector2(other.position.x, other.position.y));
                     player.unpack(other);
                     if(this.world.addPlayer(player)){
 
@@ -65,7 +65,7 @@ class Client{
 
                 this.socket.on('player-joined', (pack) => {
                     console.log('player joined');
-                    let player = new Player(pack.uuid, pack.name, new Vector2(pack.position.x, pack.position.y));
+                    let player = new Player(pack.uuid, this.world, pack.name, new Vector2(pack.position.x, pack.position.y));
                     player.unpack(pack);
                     if(this.world.addPlayer(player)){
 
@@ -83,6 +83,7 @@ class Client{
                         let data = pack[i];
                         let other = this.world.getPlayer(data.uuid);
                         other.position.set(data.position.x, data.position.y);
+                        other.isMoving = data.isMoving;
                     }
                 });
 
@@ -131,23 +132,25 @@ class Client{
     update(delta){
         let player = this.world.getPlayer(this.playerUUID);
 
-        if(Mouse.getButtonDown(Mouse.Button.LEFT)){
-            
-        }
+        if(player.isMoving === false){
+            if(Mouse.getButtonDown(Mouse.Button.LEFT)){
+                
+            }
 
-        if(Mouse.getButtonUp(Mouse.Button.LEFT)){
-            //send input data to server
-            this.socket.emit('player-shot', {
-                uuid: this.playerUUID,
-                angle: player.angle,
-                force: this.force
-            });
-            this.force = 0;
-        }
+            if(Mouse.getButtonUp(Mouse.Button.LEFT)){
+                //send input data to server
+                this.socket.emit('player-shot', {
+                    uuid: this.playerUUID,
+                    angle: player.angle,
+                    force: this.force
+                });
+                this.force = 0;
+            }
 
-        if(Mouse.getButton(Mouse.Button.LEFT)){
-            this.force += this.pullSpeed * delta;
-            this.force = Utils.clamp(this.force, 0.0, 1.0);
+            if(Mouse.getButton(Mouse.Button.LEFT)){
+                this.force += this.pullSpeed * delta;
+                this.force = Utils.clamp(this.force, 0.0, 1.0);
+            }
         }
 
         // get angle from mouse to our players position
