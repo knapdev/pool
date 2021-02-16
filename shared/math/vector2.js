@@ -70,6 +70,10 @@ class Vector2 {
 		return this.div(new Vector2(mag, mag));
 	}
 
+	dot(v){
+		return this.x * v.x + this.y * v.y;
+	}
+
 	clone(){
 		return new Vector2(this.x, this.y);
 	}

@@ -29,6 +29,8 @@ class Client{
         this.force = 0.0;   //0.0 - 1.0
         this.pullSpeed = 1.25;
 
+        this.camPos = new Vector2();
+
         this.connect();
     }
 
@@ -156,8 +158,9 @@ class Client{
         // get angle from mouse to our players position
         let mousePos = Mouse.getPos();
 
-        let deltaY = mousePos.y - player.position.y;
-        let deltaX = mousePos.x - player.position.x;
+        let deltaX = mousePos.x - (this.canvas.width/2);
+        let deltaY = mousePos.y - (this.canvas.height/2);
+        
 
         //let angleDeg = Utils.radToDeg(Math.atan2(deltaY, deltaX));
         //if(angleDeg < 0) angleDeg = 360 + angleDeg;
@@ -172,6 +175,9 @@ class Client{
     draw(){
         this.clearCanvas();
 
+        let ourPlayer = this.world.getPlayer(this.playerUUID);
+        this.camPos = new Vector2(ourPlayer.position.x - (this.canvas.width/2), ourPlayer.position.y - (this.canvas.height/2));
+
         for(let i in this.world.players){
             let player = this.world.players[i];
             if(player.uuid === this.playerUUID){
@@ -180,7 +186,7 @@ class Client{
                 this.context.fillStyle = 'rgb(255, 0, 0)';
             }
             this.context.beginPath();
-            this.context.ellipse(player.position.x, player.position.y, Player.RADIUS, Player.RADIUS, 0, 0, Utils.degToRad(360), true);
+            this.context.ellipse(player.position.x - this.camPos.x, player.position.y - this.camPos.y, Player.RADIUS, Player.RADIUS, 0, 0, Utils.degToRad(360), true);
             this.context.fill();
 
             // Draw stick
@@ -190,8 +196,8 @@ class Client{
             if(player.uuid === this.playerUUID) startDist += (48 * this.force);
             let dX = Math.cos(player.angle);
             let dY = Math.sin(player.angle);
-            let sX = player.position.x + dX * startDist;
-            let sY = player.position.y + dY * startDist;
+            let sX = (player.position.x + dX * startDist) - this.camPos.x;
+            let sY = (player.position.y + dY * startDist) - this.camPos.y;
 
             this.context.beginPath();
             this.context.moveTo(sX, sY);

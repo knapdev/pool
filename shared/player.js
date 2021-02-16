@@ -30,6 +30,7 @@ class Player{
             }
         }
         
+        //friction
         this.velocity.x *= 0.95;
         this.velocity.y *= 0.95;
 
@@ -38,9 +39,6 @@ class Player{
             this.isMoving = false;
         }
 
-        let vel = this.velocity.clone();
-        vel.x *= delta;
-        vel.y *= delta;
         this.position.add(this.velocity);
     }
 
@@ -54,29 +52,72 @@ class Player{
         this.angle = angle;
     }
 
-    checkOverlap(other){
-        let totalRadius = Player.RADIUS * 2;
-        let dist = this.position.distance(other.position);
-        if(dist < totalRadius){
-            return true;
-        }
+    // checkOverlap(other){
+    //     let totalRadius = Player.RADIUS * 2;
+    //     let dist = this.position.distance(other.position);
+    //     if(dist < totalRadius){
+    //         return true;
+    //     }
         
-        return false;
-    }
+    //     return false;
+    // }
 
     checkCollision(other){
+        //console.log('hmm');
         // get distance between players
-        let dir = this.position.clone().sub(other.position);
-        let mag = dir.magnitude();
+        let norm = this.position.clone().sub(other.position);
+        let mag = norm.magnitude();
         let totalRadius = Player.RADIUS * 2;
         if(mag < totalRadius){
+            console.log('collision');
             // correction
             let distanceCorrection = (totalRadius - mag) / 2.0;
-            let d = dir.clone();
+            let d = norm.clone();
             let correctionVector = d.normalize().mult(new Vector2(distanceCorrection, distanceCorrection));
             other.position = other.position.sub(correctionVector);
             this.position = this.position.add(correctionVector);
-            
+
+            // //get unit normal vector
+            // let uNorm = norm.clone().normalize();
+            // //get unit tanget
+            // let uTang = new Vector2(-uNorm.y, uNorm.x);
+
+            // console.log(uNorm);
+
+            // console.log(this.velocity);
+
+            // //project velocity into normal and tangential component
+            // let norm1 = uNorm.clone().dot(this.velocity);
+            // let tang1 = uTang.clone().dot(this.velocity);
+            // let norm2 = uNorm.clone().dot(other.velocity);
+            // let tang2 = uTang.clone().dot(other.velocity);
+
+            // console.log(norm1);
+            // console.log(tang1);
+            // console.log(norm2);
+            // console.log(tang2);
+
+            // //get new normal velocities
+            // let norm1Final = norm2;
+            // let norm2Final = norm1;
+
+            // //convert scalar normal & tangential velocities
+            // norm1Final = uNorm.clone().mult(norm1Final);
+            // let tang1Final = uTang.clone().mult(tang1);
+            // norm2Final = uNorm.clone().mult(norm2Final);
+            // let tang2Final = uTang.clone().mult(tang2);
+
+            // console.log(norm1Final);
+
+            // //update velocity
+            // this.velocity = norm1Final.clone().add(tang1Final);
+            // other.velocity = norm2Final.clone().add(tang2Final);
+
+            // //console.log(this.velocity);
+
+            // this.isMoving = true;
+            // other.isMoving = true;
+                        
             return true;
         }
 
