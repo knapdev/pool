@@ -161,13 +161,12 @@ class Client{
         let deltaX = mousePos.x - (this.canvas.width/2);
         let deltaY = mousePos.y - (this.canvas.height/2);
         
-
-        //let angleDeg = Utils.radToDeg(Math.atan2(deltaY, deltaX));
-        //if(angleDeg < 0) angleDeg = 360 + angleDeg;
         let angleRad = Math.atan2(deltaY, deltaX);
         document.getElementById('debug').innerText = angleRad.toFixed(2);
 
         player.angle = angleRad;
+
+        console.log(player.position);
 
         Mouse._update();
     }
@@ -205,6 +204,9 @@ class Client{
             this.context.lineWidth = stickWidth;
             this.context.stroke();
         }
+
+        this.context.fillStyle = 'rgb(0, 0, 0)';
+        this.context.fillRect(-this.camPos.x, -this.camPos.y, 8, 8);
     }
 
     createCanvas(){

@@ -99,8 +99,8 @@ class Server{
         console.log('Client [' + uuid + '] joined!');
 
         // create a player object and add it to the world
-        let player = new Player(uuid, this.world, pack.name, new Vector2((Math.random() * 500) + Player.RADIUS, (Math.random() * 500) + Player.RADIUS));
-        player.velocity.set((Math.random() * 10) - 5, (Math.random() * 10) - 5);
+        let player = new Player(uuid, this.world, pack.name, new Vector2((Math.random() * 100) + Player.RADIUS, (Math.random() * 100) + Player.RADIUS));
+        //player.velocity.set((Math.random() * 10) - 5, (Math.random() * 10) - 5);
         if(this.world.addPlayer(player)){
             // send client current world state
 

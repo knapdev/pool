@@ -67,11 +67,13 @@ class Vector2 {
 
 	normalize(){
 		let mag = this.magnitude();
-		return this.div(new Vector2(mag, mag));
+		this.x /= mag;
+		this.y /= mag;
+		return this;
 	}
 
 	dot(v){
-		return this.x * v.x + this.y * v.y;
+		return (this.x * v.x) + (this.y * v.y);
 	}
 
 	clone(){
@@ -79,4 +81,4 @@ class Vector2 {
 	}
 }
 
-export default Vector2
+export default Vector2;
