@@ -11,7 +11,7 @@ class Player{
         this.uuid = uuid;
         this.world = world;
 
-        this.name = name;
+        this.name = name + uuid.substring(0, 4);
         //this.color = color;
         this.score = 0;
 
@@ -69,12 +69,15 @@ class Player{
                 if(dist <= 4){
                     this.setVelocity(new Vector2());
                     this.position.set(other.position.x, other.position.y);
-
+                    
+                    this.world.setScore(this.uuid, 0);
                     if(this.attacker !== null){
-                        this.world.increaseScore(this.attacker);
+                        this.world.setScore(this.attacker, this.world.getPlayer(this.attacker).score += 1);
                     }
+                    
                     this.world.respawnPlayer(this.uuid);
                     this.world.resetPocket(other.uuid);
+                    this.world.updateLeaderboard();
                 }
             }
         }

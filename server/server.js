@@ -50,7 +50,7 @@ class Server{
                     player.setVelocity(new Vector2(dX * (player.charge * 32), dY * (player.charge * 32)));
                     player.isCharging = false;
                     player.charge = 0;
-                    //player.attacker = null;
+                    player.attacker = null;
                 }
             });
 
@@ -129,12 +129,16 @@ class Server{
             this.io.emit('pocket-reset', pocket.pack());
         });
 
-        this.world.registerOnIncreaseScoreCallback((uuid, score) => {
+        this.world.registerOnSetScoreCallback((uuid, score) => {
             let player = this.world.getPlayer(uuid);
-            this.io.emit('score-increase', {
+            this.io.emit('score-set', {
                 uuid: uuid,
                 score: score
             });
+        });
+
+        this.world.registerOnUpdateLeaderboardCallback(() => {
+            this.io.emit('update-leaderboard', {});
         });
 
         for(let i = 0; i < 10; i++){

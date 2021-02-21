@@ -11,7 +11,8 @@ class World{
 
         this.onRespawnPlayerCallbacks = [];
         this.onResetPocketCallbacks = [];
-        this.onIncreaseScoreCallbacks = [];
+        this.onSetScoreCallbacks = [];
+        this.onUpdateLeaderboardCallbacks = [];
     }
 
     tick(delta){
@@ -84,15 +85,20 @@ class World{
 		}
     }
 
-    increaseScore(uuid){
+    setScore(uuid, score){
         let player = this.getPlayer(uuid);
-        player.score++;
+        player.score = score;
 
-        for(let i = 0; i < this.onIncreaseScoreCallbacks.length; i++){
-			this.onIncreaseScoreCallbacks[i](uuid, player.score);
+        for(let i = 0; i < this.onSetScoreCallbacks.length; i++){
+			this.onSetScoreCallbacks[i](uuid, player.score);
 		}
     }
 
+    updateLeaderboard(){
+        for(let i = 0; i < this.onUpdateLeaderboardCallbacks.length; i++){
+			this.onUpdateLeaderboardCallbacks[i]();
+		}
+    }
 
     registerOnRespawnPlayerCallback(callback){
 		this.onRespawnPlayerCallbacks.push(callback);
@@ -108,11 +114,18 @@ class World{
 		this.onResetPocketCallbacks.remove(callback);
 	}
 
-    registerOnIncreaseScoreCallback(callback){
-		this.onIncreaseScoreCallbacks.push(callback);
+    registerOnSetScoreCallback(callback){
+		this.onSetScoreCallbacks.push(callback);
 	}
-	unregisterOnIncreaseScoreCallback(callback){
-		this.onIncreaseScoreCallbacks.remove(callback);
+	unregisterOnSetScoreCallback(callback){
+		this.onSetScoreCallbacks.remove(callback);
+	}
+
+    registerOnUpdateLeaderboardCallback(callback){
+		this.onUpdateLeaderboardCallbacks.push(callback);
+	}
+	unregisterOnUpdateLeaderboardCallback(callback){
+		this.onUpdateLeaderboardCallbacks.remove(callback);
 	}
 }
 

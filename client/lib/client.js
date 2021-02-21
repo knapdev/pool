@@ -103,10 +103,41 @@ class Client{
                     pocket.unpack(pack);
                 });
 
-                this.socket.on('score-increase', (pack) => {
+                this.socket.on('score-set', (pack) => {
                     let player = this.world.getPlayer(pack.uuid);
                     player.score = pack.score;
-                    console.log(player.score);
+                });
+
+                this.socket.on('update-leaderboard', (pack) => {
+                    //Clear leaderboard entries
+                    let leaderboard_element = document.getElementById('leaderboard');
+                    var child = leaderboard_element.lastElementChild;  
+                    while (child) { 
+                        if(child.id == 'leaderboard-entry'){
+                            leaderboard_element.removeChild(child); 
+                            child = leaderboard_element.lastElementChild;
+                        }else{
+                            break;
+                        }
+                    }
+
+                    //get sorted list of players based on score
+                    let sorted = [];
+                    for(let i in this.world.players){
+                        sorted.push(this.world.players[i]);
+                    }
+                    sorted.sort((a, b) => (a.score < b.score) ? 1 : -1);
+                    //populate leaderboard ui
+                    let count = 0;
+                    for(let i in sorted){
+                        count++;
+                        if(count > 5) break;
+                        let p = sorted[i];
+                        let entry = document.createElement('div');
+                        entry.setAttribute('id', 'leaderboard-entry');
+                        entry.innerHTML = '<span>' + p.name + '</span>' + ': ' + p.score;
+                        leaderboard_element.appendChild(entry);
+                    }
                 });
 
                 this.start();
@@ -167,20 +198,7 @@ class Client{
                 this.socket.emit('button-up', {
                     uuid: this.playerUUID
                 });
-
-                //send input data to server
-                // this.socket.emit('player-shot', {
-                //     uuid: this.playerUUID,
-                //     angle: player.angle,
-                //     force: this.force
-                // });
-                // this.force = 0;
             }
-
-            // if(Mouse.getButton(Mouse.Button.LEFT)){
-            //     this.force += this.pullSpeed * delta;
-            //     this.force = Utils.clamp(this.force, 0.0, 1.0);
-            // }
 
             let mousePos = Mouse.getPos();
             let deltaX = mousePos.x - (this.canvas.width/2);    //add camera lerp
@@ -193,19 +211,6 @@ class Client{
                 }
             });
         }
-
-        // get angle from mouse to our players position
-        // let mousePos = Mouse.getPos();
-
-        // let deltaX = mousePos.x - (this.canvas.width/2);
-        // let deltaY = mousePos.y - (this.canvas.height/2);
-        
-        // let angleRad = Math.atan2(deltaY, deltaX);
-        // document.getElementById('debug').innerText = angleRad.toFixed(2);
-
-        // player.angle = angleRad;
-
-        // console.log(player.position);
 
         Mouse._update();
     }

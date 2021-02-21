@@ -17,3 +17,29 @@ canvas{
     height: 100%;
     pointer-events: none;
 }
+
+
+/* LEADERBOARD */
+#leaderboard{
+    /* visibility: hidden; */
+    position: absolute;
+    top: 40px;
+    right: 10px;
+    border: 2px solid rgb(211, 211, 211);
+    text-align: left;
+    background-color: #000;
+}
+
+#leaderboard-header{
+    padding: 0.5vw;
+    width: 20vw;
+    color: white;
+    border-bottom: 2px solid rgb(211, 211, 211);
+}
+
+#leaderboard-entry{
+    height: 1.1em;
+    margin: 0.5vw;
+    line-height: 1.1em;
+    color: white;
+}
