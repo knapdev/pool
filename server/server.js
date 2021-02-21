@@ -5,7 +5,8 @@ import {v4 as UUID} from 'uuid';
 
 import Vector2 from '../shared/math/vector2.js';
 import World from '../shared/world.js';
-import Player from '../shared/player.js';
+import Player from '../shared/entities/player.js';
+import Pocket from '../shared/entities/pocket.js';
 
 class Server{
     constructor(http){
@@ -33,14 +34,43 @@ class Server{
                 this.onLeave(socket.uuid);
             });
 
-            socket.on('player-shot', (pack) => {
+            socket.on('button-down', (pack) => {
                 let player = this.world.getPlayer(pack.uuid);
-                
-                let dX = -Math.cos(pack.angle);
-                let dY = -Math.sin(pack.angle);
-
-                player.setVelocity(new Vector2(dX * (pack.force * 32), dY * (pack.force * 32)));
+                if(player){
+                    player.isCharging = true;
+                }
             });
+
+            socket.on('button-up', (pack) => {
+                let player = this.world.getPlayer(pack.uuid);
+                if(player){
+                    let dX = -Math.cos(player.angle);
+                    let dY = -Math.sin(player.angle);
+
+                    player.setVelocity(new Vector2(dX * (player.charge * 32), dY * (player.charge * 32)));
+                    player.isCharging = false;
+                    player.charge = 0;
+                    //player.attacker = null;
+                }
+            });
+
+            socket.on('mouse-pos', (pack) => {
+                let player = this.world.getPlayer(pack.uuid);
+                if(player){
+                    let angleRad = Math.atan2(pack.pos.y, pack.pos.x);
+                    player.angle = angleRad;
+                }
+            });
+
+            // socket.on('player-shot', (pack) => {
+            //     let player = this.world.getPlayer(pack.uuid);
+            //     if(player){
+            //         let dX = -Math.cos(pack.angle);
+            //         let dY = -Math.sin(pack.angle);
+
+            //         player.setVelocity(new Vector2(dX * (pack.charge * 32), dY * (pack.charge * 32)));
+            //     }
+            // });
 
             socket.on('disconnect', () => {
                 this.onLeave(socket.uuid);
@@ -67,20 +97,52 @@ class Server{
         let pack = [];
         for(let i in this.world.players){
             let player = this.world.players[i];
+            //if(player.isMoving){
             pack.push({
                 uuid: player.uuid,
                 position: {
                     x: player.position.x,
                     y: player.position.y
                 },
-                isMoving: player.isMoving
+                isMoving: player.isMoving,
+                charge: player.charge,
+                angle: player.angle
             });
+            //}
         }
         this.io.emit('update-players', pack);
     }
 
     setupWorld(){
         this.world = new World();
+
+        this.world.registerOnRespawnPlayerCallback((uuid) => {
+            this.world.getPlayer(uuid).score = 0;
+            this.io.emit('player-respawn', {
+                uuid: uuid
+            });
+        });
+
+        this.world.registerOnResetPocketCallback((uuid) => {
+            let pocket = this.world.getPocket(uuid);
+
+            this.io.emit('pocket-reset', pocket.pack());
+        });
+
+        this.world.registerOnIncreaseScoreCallback((uuid, score) => {
+            let player = this.world.getPlayer(uuid);
+            this.io.emit('score-increase', {
+                uuid: uuid,
+                score: score
+            });
+        });
+
+        for(let i = 0; i < 10; i++){
+            let rX = (Math.random() * 1000) - 500;
+            let rY = (Math.random() * 1000) - 500;
+            let pocket = new Pocket(UUID(), new Vector2(rX, rY));
+            this.world.addPocket(pocket);
+        }
     }
 
     ////
@@ -99,7 +161,7 @@ class Server{
         console.log('Client [' + uuid + '] joined!');
 
         // create a player object and add it to the world
-        let player = new Player(uuid, this.world, pack.name, new Vector2((Math.random() * 100) + Player.RADIUS, (Math.random() * 100) + Player.RADIUS));
+        let player = new Player(uuid, this.world, pack.name, new Vector2((Math.random() * 1000) - 500, (Math.random() * 1000) - 500));
         //player.velocity.set((Math.random() * 10) - 5, (Math.random() * 10) - 5);
         if(this.world.addPlayer(player)){
             // send client current world state
@@ -107,11 +169,16 @@ class Server{
             let pack = {
                 success: true,
                 uuid: player.uuid,
-                players: []
+                players: [],
+                pockets: []
             };
             for(let p in this.world.players){
                 let other = this.world.players[p];
                 pack.players.push(other.pack());
+            }
+            for(let p in this.world.pockets){
+                let other = this.world.pockets[p];
+                pack.pockets.push(other.pack());
             }
             this.SOCKETS[uuid].emit('join-response', pack);
 

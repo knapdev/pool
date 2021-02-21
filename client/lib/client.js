@@ -4,9 +4,10 @@ import Utils from '../../shared/math/utils.js';
 import Vector2 from "../../shared/math/vector2.js";
 
 import World from "../../shared/world.js";
-import Player from "../../shared/player.js";
+import Player from "../../shared/entities/player.js";
 
 import Mouse from '../lib/mouse.js';
+import Pocket from '../../shared/entities/pocket.js';
 
 class Client{
     constructor(config){
@@ -24,10 +25,6 @@ class Client{
 
         this.world = null;
         this.playerUUID = 0;
-
-
-        this.force = 0.0;   //0.0 - 1.0
-        this.pullSpeed = 1.25;
 
         this.camPos = new Vector2();
 
@@ -61,7 +58,14 @@ class Client{
                     let player = new Player(other.uuid, this.world, other.name, new Vector2(other.position.x, other.position.y));
                     player.unpack(other);
                     if(this.world.addPlayer(player)){
+                    }
+                }
 
+                for(let i in pack.pockets){
+                    let other = pack.pockets[i];
+                    let pocket = new Pocket(other.uuid, new Vector2(other.position.x, other.position.y));
+                    pocket.unpack(other);
+                    if(this.world.addPocket(pocket)){
                     }
                 }
 
@@ -70,13 +74,11 @@ class Client{
                     let player = new Player(pack.uuid, this.world, pack.name, new Vector2(pack.position.x, pack.position.y));
                     player.unpack(pack);
                     if(this.world.addPlayer(player)){
-
                     }
                 });
 
                 this.socket.on('player-left', (pack) => {
                     if(this.world.removePlayer(pack.uuid)){
-
                     }
                 });
 
@@ -86,7 +88,25 @@ class Client{
                         let other = this.world.getPlayer(data.uuid);
                         other.position.set(data.position.x, data.position.y);
                         other.isMoving = data.isMoving;
+                        other.charge = data.charge;
+                        other.angle = data.angle;
                     }
+                });
+
+                this.socket.on('player-respawn', (pack) => {
+                    let player = this.world.getPlayer(pack.uuid);
+                    player.score = 0;
+                });
+
+                this.socket.on('pocket-reset', (pack) => {
+                    let pocket = this.world.getPocket(pack.uuid);
+                    pocket.unpack(pack);
+                });
+
+                this.socket.on('score-increase', (pack) => {
+                    let player = this.world.getPlayer(pack.uuid);
+                    player.score = pack.score;
+                    console.log(player.score);
                 });
 
                 this.start();
@@ -136,37 +156,56 @@ class Client{
 
         if(player.isMoving === false){
             if(Mouse.getButtonDown(Mouse.Button.LEFT)){
-                
+                //send button event
+                this.socket.emit('button-down', {
+                    uuid: this.playerUUID
+                });
             }
 
             if(Mouse.getButtonUp(Mouse.Button.LEFT)){
-                //send input data to server
-                this.socket.emit('player-shot', {
-                    uuid: this.playerUUID,
-                    angle: player.angle,
-                    force: this.force
+                //send button event
+                this.socket.emit('button-up', {
+                    uuid: this.playerUUID
                 });
-                this.force = 0;
+
+                //send input data to server
+                // this.socket.emit('player-shot', {
+                //     uuid: this.playerUUID,
+                //     angle: player.angle,
+                //     force: this.force
+                // });
+                // this.force = 0;
             }
 
-            if(Mouse.getButton(Mouse.Button.LEFT)){
-                this.force += this.pullSpeed * delta;
-                this.force = Utils.clamp(this.force, 0.0, 1.0);
-            }
+            // if(Mouse.getButton(Mouse.Button.LEFT)){
+            //     this.force += this.pullSpeed * delta;
+            //     this.force = Utils.clamp(this.force, 0.0, 1.0);
+            // }
+
+            let mousePos = Mouse.getPos();
+            let deltaX = mousePos.x - (this.canvas.width/2);    //add camera lerp
+            let deltaY = mousePos.y - (this.canvas.height/2);
+            this.socket.emit('mouse-pos', {
+                uuid: this.playerUUID,
+                pos: {
+                    x: deltaX,
+                    y: deltaY
+                }
+            });
         }
 
         // get angle from mouse to our players position
-        let mousePos = Mouse.getPos();
+        // let mousePos = Mouse.getPos();
 
-        let deltaX = mousePos.x - (this.canvas.width/2);
-        let deltaY = mousePos.y - (this.canvas.height/2);
+        // let deltaX = mousePos.x - (this.canvas.width/2);
+        // let deltaY = mousePos.y - (this.canvas.height/2);
         
-        let angleRad = Math.atan2(deltaY, deltaX);
-        document.getElementById('debug').innerText = angleRad.toFixed(2);
+        // let angleRad = Math.atan2(deltaY, deltaX);
+        // document.getElementById('debug').innerText = angleRad.toFixed(2);
 
-        player.angle = angleRad;
+        // player.angle = angleRad;
 
-        console.log(player.position);
+        // console.log(player.position);
 
         Mouse._update();
     }
@@ -176,6 +215,15 @@ class Client{
 
         let ourPlayer = this.world.getPlayer(this.playerUUID);
         this.camPos = new Vector2(ourPlayer.position.x - (this.canvas.width/2), ourPlayer.position.y - (this.canvas.height/2));
+
+        for(let i in this.world.pockets){
+            let pocket = this.world.pockets[i];
+            this.context.fillStyle = 'rgb(0, 0, 0)';
+            this.context.beginPath();
+            this.context.ellipse(pocket.position.x - this.camPos.x, pocket.position.y - this.camPos.y, Pocket.RADIUS, Pocket.RADIUS, 0, 0, Utils.degToRad(360), true);
+            this.context.lineWidth = 4;
+            this.context.stroke();
+        }
 
         for(let i in this.world.players){
             let player = this.world.players[i];
@@ -189,20 +237,22 @@ class Client{
             this.context.fill();
 
             // Draw stick
-            let stickLength = 64;
-            let stickWidth = 8;
-            let startDist = 24;
-            if(player.uuid === this.playerUUID) startDist += (48 * this.force);
-            let dX = Math.cos(player.angle);
-            let dY = Math.sin(player.angle);
-            let sX = (player.position.x + dX * startDist) - this.camPos.x;
-            let sY = (player.position.y + dY * startDist) - this.camPos.y;
+            if(player.isMoving === false){
+                let stickLength = 64;
+                let stickWidth = 8;
+                let startDist = 24;
+                startDist += (48 * player.charge);
+                let dX = Math.cos(player.angle);
+                let dY = Math.sin(player.angle);
+                let sX = (player.position.x + dX * startDist) - this.camPos.x;
+                let sY = (player.position.y + dY * startDist) - this.camPos.y;
 
-            this.context.beginPath();
-            this.context.moveTo(sX, sY);
-            this.context.lineTo(sX + dX * stickLength, sY + dY * stickLength);
-            this.context.lineWidth = stickWidth;
-            this.context.stroke();
+                this.context.beginPath();
+                this.context.moveTo(sX, sY);
+                this.context.lineTo(sX + dX * stickLength, sY + dY * stickLength);
+                this.context.lineWidth = stickWidth;
+                this.context.stroke();
+            }
         }
 
         this.context.fillStyle = 'rgb(0, 0, 0)';
