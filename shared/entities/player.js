@@ -6,13 +6,32 @@ import Utils from '../math/utils.js';
 class Player{
     static RADIUS = 16;
     static CHARGE_RATE = 1.25;
+    static COLORS = [];
 
-    constructor(uuid, world, name, position){
+    static setupColors(){
+        //Setup colors
+        
+        Player.COLORS.push({name: 'Red', r: 173, g: 35, b: 35});
+        Player.COLORS.push({name: 'Pink', r: 255, g: 205, b: 243});
+        Player.COLORS.push({name: 'Blue', r: 42, g: 75, b: 215});
+        Player.COLORS.push({name: 'Light Blue', r: 157, g: 175, b: 255});
+        Player.COLORS.push({name: 'Green', r: 29, g: 105, b: 20});
+        Player.COLORS.push({name: 'Light Green', r: 129, g: 197, b: 122});
+        Player.COLORS.push({name: 'Yellow', r: 255, g: 238, b: 51});
+        Player.COLORS.push({name: 'Orange', r: 255, g: 146, b: 51});
+        Player.COLORS.push({name: 'Brown', r: 129, g: 74, b: 25});
+        Player.COLORS.push({name: 'Purple', r: 129, g: 38, b: 192});
+        Player.COLORS.push({name: 'Cyan', r: 41, g: 208, b: 208});
+        Player.COLORS.push({name: 'Light Gray', r: 160, g: 160, b: 160});
+        Player.COLORS.push({name: 'White', r: 255, g: 255, b: 255});
+    }
+
+    constructor(uuid, world, name, color, position){
         this.uuid = uuid;
         this.world = world;
 
-        this.name = name + uuid.substring(0, 4);
-        //this.color = color;
+        this.name = name;
+        this.color = color;
         this.score = 0;
 
         this.position = position;
@@ -69,7 +88,7 @@ class Player{
                 if(dist <= 4){
                     this.setVelocity(new Vector2());
                     this.position.set(other.position.x, other.position.y);
-                    
+
                     this.world.setScore(this.uuid, 0);
                     if(this.attacker !== null){
                         this.world.setScore(this.attacker, this.world.getPlayer(this.attacker).score += 1);
@@ -134,6 +153,7 @@ class Player{
         let pack = {
             uuid: this.uuid,
             name: this.name,
+            color: this.color,
             position: {
                 x: this.position.x,
                 y: this.position.y
@@ -151,6 +171,7 @@ class Player{
     unpack(pack){
         this.uuid = pack.uuid;
         this.name = pack.name;
+        this.color = pack.color;
         this.position.set(pack.position.x, pack.position.y);
         this.velocity.set(pack.velocity.x, pack.position.y);
         this.angle = pack.angle;

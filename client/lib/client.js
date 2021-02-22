@@ -28,6 +28,8 @@ class Client{
 
         this.camPos = new Vector2();
 
+        this.selected_color_index = 0;
+
         this.connect();
     }
 
@@ -41,109 +43,142 @@ class Client{
     }
 
     connect(){
-        this.socket = io();
-        this.socket.emit('join', {
-            name: 'Player'
+
+        Player.setupColors();
+        this.updateColorBox();
+
+        let self = this;
+        document.getElementById('arrow-button-previous').addEventListener('click', (evnt) => {
+            self.selected_color_index -= 1;
+            if(self.selected_color_index < 0){
+                self.selected_color_index = Player.COLORS.length-1;
+            }
+            self.updateColorBox();
         });
-        this.socket.on('join-response', (pack) => {
-            if(pack.success){
-                this.init();
-
-                this.playerUUID = pack.uuid;
     
-                this.world = new World();
-                // create and add players to world
-                for(let i in pack.players){
-                    let other = pack.players[i];
-                    let player = new Player(other.uuid, this.world, other.name, new Vector2(other.position.x, other.position.y));
-                    player.unpack(other);
-                    if(this.world.addPlayer(player)){
-                    }
-                }
+        document.getElementById('arrow-button-next').addEventListener('click', (evnt) => {
+            self.selected_color_index += 1;
+            if(self.selected_color_index >= Player.COLORS.length){
+                self.selected_color_index = 0;
+            }
+            self.updateColorBox();
+        });
+        
+        document.getElementById('name-form').addEventListener('submit', (evnt) => {
+            evnt.preventDefault();
 
-                for(let i in pack.pockets){
-                    let other = pack.pockets[i];
-                    let pocket = new Pocket(other.uuid, new Vector2(other.position.x, other.position.y));
-                    pocket.unpack(other);
-                    if(this.world.addPocket(pocket)){
-                    }
-                }
+            document.getElementById('lobby').style.visibility = 'hidden';
+            document.getElementById('ui').style.visibility = 'visible';
 
-                this.socket.on('player-joined', (pack) => {
-                    console.log('player joined');
-                    let player = new Player(pack.uuid, this.world, pack.name, new Vector2(pack.position.x, pack.position.y));
-                    player.unpack(pack);
-                    if(this.world.addPlayer(player)){
-                    }
-                });
+            let nameInputElem = document.getElementById('name-text');
+            let nameValue = nameInputElem.value;
+            nameInputElem.value = '';
 
-                this.socket.on('player-left', (pack) => {
-                    if(this.world.removePlayer(pack.uuid)){
-                    }
-                });
+            this.socket = io();
+            this.socket.emit('join', {
+                name: nameValue,
+                color: Player.COLORS[this.selected_color_index]
+            });
+            this.socket.on('join-response', (pack) => {
+                if(pack.success){
+                    this.init();
 
-                this.socket.on('update-players', (pack) => {
-                    for(let i in pack){
-                        let data = pack[i];
-                        let other = this.world.getPlayer(data.uuid);
-                        other.position.set(data.position.x, data.position.y);
-                        other.isMoving = data.isMoving;
-                        other.charge = data.charge;
-                        other.angle = data.angle;
-                    }
-                });
-
-                this.socket.on('player-respawn', (pack) => {
-                    let player = this.world.getPlayer(pack.uuid);
-                    player.score = 0;
-                });
-
-                this.socket.on('pocket-reset', (pack) => {
-                    let pocket = this.world.getPocket(pack.uuid);
-                    pocket.unpack(pack);
-                });
-
-                this.socket.on('score-set', (pack) => {
-                    let player = this.world.getPlayer(pack.uuid);
-                    player.score = pack.score;
-                });
-
-                this.socket.on('update-leaderboard', (pack) => {
-                    //Clear leaderboard entries
-                    let leaderboard_element = document.getElementById('leaderboard');
-                    var child = leaderboard_element.lastElementChild;  
-                    while (child) { 
-                        if(child.id == 'leaderboard-entry'){
-                            leaderboard_element.removeChild(child); 
-                            child = leaderboard_element.lastElementChild;
-                        }else{
-                            break;
+                    this.playerUUID = pack.uuid;
+        
+                    this.world = new World();
+                    // create and add players to world
+                    for(let i in pack.players){
+                        let other = pack.players[i];
+                        let player = new Player(other.uuid, this.world, other.name, other.color, new Vector2(other.position.x, other.position.y));
+                        player.unpack(other);
+                        if(this.world.addPlayer(player)){
                         }
                     }
 
-                    //get sorted list of players based on score
-                    let sorted = [];
-                    for(let i in this.world.players){
-                        sorted.push(this.world.players[i]);
+                    for(let i in pack.pockets){
+                        let other = pack.pockets[i];
+                        let pocket = new Pocket(other.uuid, new Vector2(other.position.x, other.position.y));
+                        pocket.unpack(other);
+                        if(this.world.addPocket(pocket)){
+                        }
                     }
-                    sorted.sort((a, b) => (a.score < b.score) ? 1 : -1);
-                    //populate leaderboard ui
-                    let count = 0;
-                    for(let i in sorted){
-                        count++;
-                        if(count > 5) break;
-                        let p = sorted[i];
-                        let entry = document.createElement('div');
-                        entry.setAttribute('id', 'leaderboard-entry');
-                        entry.innerHTML = '<span>' + p.name + '</span>' + ': ' + p.score;
-                        leaderboard_element.appendChild(entry);
-                    }
-                });
 
-                this.start();
-            }else{
-                //failed to join
-            }
+                    this.socket.on('player-joined', (pack) => {
+                        console.log('player joined');
+                        let player = new Player(pack.uuid, this.world, pack.name, pack.color, new Vector2(pack.position.x, pack.position.y));
+                        player.unpack(pack);
+                        if(this.world.addPlayer(player)){
+                        }
+                    });
+
+                    this.socket.on('player-left', (pack) => {
+                        if(this.world.removePlayer(pack.uuid)){
+                        }
+                    });
+
+                    this.socket.on('update-players', (pack) => {
+                        for(let i in pack){
+                            let data = pack[i];
+                            let other = this.world.getPlayer(data.uuid);
+                            other.position.set(data.position.x, data.position.y);
+                            other.isMoving = data.isMoving;
+                            other.charge = data.charge;
+                            other.angle = data.angle;
+                        }
+                    });
+
+                    this.socket.on('player-respawn', (pack) => {
+                        let player = this.world.getPlayer(pack.uuid);
+                        player.score = 0;
+                    });
+
+                    this.socket.on('pocket-reset', (pack) => {
+                        let pocket = this.world.getPocket(pack.uuid);
+                        pocket.unpack(pack);
+                    });
+
+                    this.socket.on('score-set', (pack) => {
+                        let player = this.world.getPlayer(pack.uuid);
+                        player.score = pack.score;
+                    });
+
+                    this.socket.on('update-leaderboard', (pack) => {
+                        //Clear leaderboard entries
+                        let leaderboard_element = document.getElementById('leaderboard');
+                        var child = leaderboard_element.lastElementChild;  
+                        while (child) { 
+                            if(child.id == 'leaderboard-entry'){
+                                leaderboard_element.removeChild(child); 
+                                child = leaderboard_element.lastElementChild;
+                            }else{
+                                break;
+                            }
+                        }
+
+                        //get sorted list of players based on score
+                        let sorted = [];
+                        for(let i in this.world.players){
+                            sorted.push(this.world.players[i]);
+                        }
+                        sorted.sort((a, b) => (a.score < b.score) ? 1 : -1);
+                        //populate leaderboard ui
+                        let count = 0;
+                        for(let i in sorted){
+                            count++;
+                            if(count > 5) break;
+                            let p = sorted[i];
+                            let entry = document.createElement('div');
+                            entry.setAttribute('id', 'leaderboard-entry');
+                            entry.innerHTML = '<span>' + p.name + '</span>' + ': ' + p.score;
+                            leaderboard_element.appendChild(entry);
+                        }
+                    });
+
+                    this.start();
+                }else{
+                    //failed to join
+                }
+            });
         });
     }
 
@@ -232,11 +267,7 @@ class Client{
 
         for(let i in this.world.players){
             let player = this.world.players[i];
-            if(player.uuid === this.playerUUID){
-                this.context.fillStyle = 'rgb(0, 0, 255)';
-            }else{
-                this.context.fillStyle = 'rgb(255, 0, 0)';
-            }
+            this.context.fillStyle = 'rgb(' + player.color.r + ', ' + player.color.g + ', ' + player.color.b + ')';
             this.context.beginPath();
             this.context.ellipse(player.position.x - this.camPos.x, player.position.y - this.camPos.y, Player.RADIUS, Player.RADIUS, 0, 0, Utils.degToRad(360), true);
             this.context.fill();
@@ -288,6 +319,12 @@ class Client{
             this.canvas.style.width = w + 'px';
             this.canvas.style.height = h + 'px';
         }
+    }
+
+    updateColorBox(){
+        let col = Player.COLORS[this.selected_color_index];
+        let color_box_elem = document.getElementById('color-box');
+        color_box_elem.style.backgroundColor = 'rgb(' + col.r + ',' + col.g + ',' + col.b + ')';
     }
 }
 

@@ -165,7 +165,7 @@ class Server{
         console.log('Client [' + uuid + '] joined!');
 
         // create a player object and add it to the world
-        let player = new Player(uuid, this.world, pack.name, new Vector2((Math.random() * 1000) - 500, (Math.random() * 1000) - 500));
+        let player = new Player(uuid, this.world, pack.name, pack.color, new Vector2((Math.random() * 1000) - 500, (Math.random() * 1000) - 500));
         //player.velocity.set((Math.random() * 10) - 5, (Math.random() * 10) - 5);
         if(this.world.addPlayer(player)){
             // send client current world state
@@ -188,6 +188,8 @@ class Server{
 
             // send OTHER clients this players info
             this.SOCKETS[uuid].broadcast.emit('player-joined', player.pack());
+
+            this.io.emit('update-leaderboard', {});
         }else{
             this.SOCKETS[uuid].emit('join-response', {
                 success: false
@@ -203,6 +205,7 @@ class Server{
             this.SOCKETS[uuid].broadcast.emit('player-left', {
                 uuid: uuid
             });
+            this.io.emit('update-leaderboard', {});
         }
     }
 

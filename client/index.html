@@ -15,6 +15,31 @@
     <body>
         <script type="module" src="./client/src/main.js"></script>
 
+        <div id="lobby">
+            <div id="lobby-container">
+                <div id="title">
+                    <h1 style="font-size: 60px; color: white;">POOL.IO</h1>
+                    <h1 style="font-size: 15px; color: white;">Online Multiplayer Pool Game</h1>
+                </div>
+
+                <div id="color-container">
+                    <div id="color-wrapper">
+                        <div id="color-wrapper">
+                            <div id="arrow-button-previous" class="arrow-button"></div>
+                            <div id="color-box"></div>
+                            <div id="arrow-button-next" class="arrow-button"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="name-form">
+                    <input id="name-text" autocomplete="off" title="name" value="Guest"/>
+                    </br>
+                    <button id="play-button">Play</button>
+                </form>
+            </div>
+        </div>
+
         <div id="ui">
             <div id="leaderboard">
                 <div id="leaderboard-header">Leaderboard</div>
