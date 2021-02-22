@@ -30,6 +30,8 @@ class Client{
 
         this.selected_color_index = 0;
 
+        this.image = null;
+
         this.connect();
     }
 
@@ -43,6 +45,12 @@ class Client{
     }
 
     connect(){
+
+        this.image = new Image();
+        this.image.src = './client/res/dude.png';
+        this.image.onload = function(){
+            console.log('image loaded');
+        };
 
         Player.setupColors();
         this.updateColorBox();
@@ -143,35 +151,7 @@ class Client{
                     });
 
                     this.socket.on('update-leaderboard', (pack) => {
-                        //Clear leaderboard entries
-                        let leaderboard_element = document.getElementById('leaderboard');
-                        var child = leaderboard_element.lastElementChild;  
-                        while (child) { 
-                            if(child.id == 'leaderboard-entry'){
-                                leaderboard_element.removeChild(child); 
-                                child = leaderboard_element.lastElementChild;
-                            }else{
-                                break;
-                            }
-                        }
-
-                        //get sorted list of players based on score
-                        let sorted = [];
-                        for(let i in this.world.players){
-                            sorted.push(this.world.players[i]);
-                        }
-                        sorted.sort((a, b) => (a.score < b.score) ? 1 : -1);
-                        //populate leaderboard ui
-                        let count = 0;
-                        for(let i in sorted){
-                            count++;
-                            if(count > 5) break;
-                            let p = sorted[i];
-                            let entry = document.createElement('div');
-                            entry.setAttribute('id', 'leaderboard-entry');
-                            entry.innerHTML = '<span>' + p.name + '</span>' + ': ' + p.score;
-                            leaderboard_element.appendChild(entry);
-                        }
+                        this.updateLeaderboard();
                     });
 
                     this.start();
@@ -258,41 +238,70 @@ class Client{
 
         for(let i in this.world.pockets){
             let pocket = this.world.pockets[i];
+            let x = (pocket.position.x - this.camPos.x) % World.SIZE;
+            if(x < -Pocket.RADIUS*2){
+                x = x + World.SIZE;
+            }else if(x > window.innerWidth + Pocket.RADIUS*2){
+                x = x - World.SIZE;
+            }
+            let y = (pocket.position.y - this.camPos.y) % World.SIZE;
+            if(y < -Pocket.RADIUS*2){
+                y = y + World.SIZE;
+            }else if(y > window.innerHeight + Pocket.RADIUS*2){
+                y = y - World.SIZE;
+            }
             this.context.fillStyle = 'rgb(0, 0, 0)';
             this.context.beginPath();
-            this.context.ellipse(pocket.position.x - this.camPos.x, pocket.position.y - this.camPos.y, Pocket.RADIUS, Pocket.RADIUS, 0, 0, Utils.degToRad(360), true);
+            this.context.ellipse(x, y, Pocket.RADIUS, Pocket.RADIUS, 0, 0, Utils.degToRad(360), true);
             this.context.lineWidth = 4;
             this.context.stroke();
         }
 
         for(let i in this.world.players){
             let player = this.world.players[i];
+            let x = (player.position.x - this.camPos.x) % World.SIZE;
+            if(x < -Player.RADIUS*2){
+                x = x + World.SIZE;
+            }else if(x > window.innerWidth + Player.RADIUS*2){
+                x = x - World.SIZE;
+            }
+            let y = (player.position.y - this.camPos.y) % World.SIZE;
+            if(y < -Player.RADIUS*2){
+                y = y + World.SIZE;
+            }else if(y > window.innerHeight + Player.RADIUS*2){
+                y = y - World.SIZE;
+            }
             this.context.fillStyle = 'rgb(' + player.color.r + ', ' + player.color.g + ', ' + player.color.b + ')';
             this.context.beginPath();
-            this.context.ellipse(player.position.x - this.camPos.x, player.position.y - this.camPos.y, Player.RADIUS, Player.RADIUS, 0, 0, Utils.degToRad(360), true);
+            this.context.ellipse(x, y, Player.RADIUS, Player.RADIUS, 0, 0, Utils.degToRad(360), true);
             this.context.fill();
-
-            // Draw stick
-            if(player.isMoving === false){
-                let stickLength = 64;
-                let stickWidth = 8;
-                let startDist = 24;
-                startDist += (48 * player.charge);
-                let dX = Math.cos(player.angle);
-                let dY = Math.sin(player.angle);
-                let sX = (player.position.x + dX * startDist) - this.camPos.x;
-                let sY = (player.position.y + dY * startDist) - this.camPos.y;
-
-                this.context.beginPath();
-                this.context.moveTo(sX, sY);
-                this.context.lineTo(sX + dX * stickLength, sY + dY * stickLength);
-                this.context.lineWidth = stickWidth;
-                this.context.stroke();
-            }
         }
 
-        this.context.fillStyle = 'rgb(0, 0, 0)';
-        this.context.fillRect(-this.camPos.x, -this.camPos.y, 8, 8);
+        for(let i in this.world.players){
+            let player = this.world.players[i];
+            let startDist = 24;
+            startDist += (48 * player.charge);
+            this.context.save();
+            let x = (player.position.x - this.camPos.x) % World.SIZE;
+            if(x < -Player.RADIUS*2){
+                x = x + World.SIZE;
+            }else if(x > window.innerWidth + Player.RADIUS*2){
+                x = x - World.SIZE;
+            }
+            let y = (player.position.y - this.camPos.y) % World.SIZE;
+            if(y < -Player.RADIUS*2){
+                y = y + World.SIZE;
+            }else if(y > window.innerHeight + Player.RADIUS*2){
+                y = y - World.SIZE;
+            }
+            this.context.translate(x, y);
+            this.context.rotate(player.angle + Utils.degToRad(-90));
+            this.context.translate(-16, startDist);
+            this.context.drawImage(this.image, 0, 0);
+            this.context.restore();
+        }
+
+        this.drawMinimap();
     }
 
     createCanvas(){
@@ -325,6 +334,87 @@ class Client{
         let col = Player.COLORS[this.selected_color_index];
         let color_box_elem = document.getElementById('color-box');
         color_box_elem.style.backgroundColor = 'rgb(' + col.r + ',' + col.g + ',' + col.b + ')';
+    }
+
+    updateLeaderboard(){
+        //Clear leaderboard entries
+        let leaderboard_element = document.getElementById('leaderboard');
+        var child = leaderboard_element.lastElementChild;  
+        while (child) { 
+            if(child.id == 'leaderboard-entry'){
+                leaderboard_element.removeChild(child); 
+                child = leaderboard_element.lastElementChild;
+            }else{
+                break;
+            }
+        }
+
+        //get sorted list of players based on score
+        let sorted = [];
+        for(let i in this.world.players){
+            sorted.push(this.world.players[i]);
+        }
+        sorted.sort((a, b) => (a.score < b.score) ? 1 : -1);
+        //populate leaderboard ui
+        let count = 0;
+        for(let i in sorted){
+            count++;
+            if(count > 5) break;
+            let p = sorted[i];
+            let entry = document.createElement('div');
+            entry.setAttribute('id', 'leaderboard-entry');
+            entry.innerHTML = '<span style="color: rgb(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ');">' + p.name + '</span>' + ': ' + p.score;
+            leaderboard_element.appendChild(entry);
+        }
+    }
+
+    drawMinimap(){
+        this.context.save();
+        this.context.lineWidth = 1;
+        let width = 150;
+        let height = 150;
+        let x_pos = window.innerWidth - (width + 10);
+        let y_pos = window.innerHeight - (height + 10);
+
+        this.context.fillStyle = 'rgb(0, 0, 0)';
+        this.context.fillRect(x_pos, y_pos, width, height);
+
+        this.context.strokeStyle = 'rgb(255, 255, 255)';
+        this.context.strokeRect(x_pos, y_pos, width, height);
+
+        this.context.strokeStyle = 'rgb(32, 32, 64)';
+        
+        this.context.beginPath();
+        this.context.moveTo(x_pos + (width/2), y_pos);
+        this.context.lineTo(x_pos + (width/2), y_pos + height);
+        this.context.stroke();
+
+        this.context.beginPath();
+        this.context.moveTo(x_pos, y_pos + (height/2));
+        this.context.lineTo(x_pos + width, y_pos + (height/2));
+        this.context.stroke();
+
+        for(var i in this.world.pockets){
+            let pocket = this.world.pockets[i];
+
+            let px = width * (pocket.position.x / World.SIZE);
+            let py = height * (pocket.position.y / World.SIZE);
+
+            this.context.fillStyle = 'rgb(255, 255, 255)';
+            this.context.fillRect(x_pos + px - 2, y_pos + py - 2, 4, 4);
+        }
+
+        for(var i in this.world.players){
+            let player = this.world.players[i];
+
+            let px = width * (player.position.x / World.SIZE);
+            let py = height * (player.position.y / World.SIZE);
+
+            this.context.fillStyle = 'rgb(' + player.color.r + ',' + player.color.g + ',' + player.color.b + ')';
+            this.context.fillRect(x_pos + px - 2, y_pos + py - 2, 4, 4);
+        }
+
+        this.context.restore();
     }
 }
 

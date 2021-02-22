@@ -1,8 +1,12 @@
 'use strict';
 
+import Utils from '../shared/math/utils.js';
+import Vector2 from '../shared/math/vector2.js';
+import Pocket from '../shared/entities/pocket.js';
+
 class World{
 
-    static SIZE = 1000;
+    static SIZE = 5000;
 
     constructor(){
 
@@ -69,7 +73,7 @@ class World{
 
     respawnPlayer(uuid){
         let player = this.getPlayer(uuid);
-        player.position.set((Math.random() * 1000) - 500, (Math.random() * 1000) - 500);
+        player.position.set((Math.random() * World.SIZE), (Math.random() * World.SIZE));
         player.attacker = null;
         
         for(let i = 0; i < this.onRespawnPlayerCallbacks.length; i++){
@@ -78,7 +82,8 @@ class World{
     }
 
     resetPocket(uuid){
-        this.pockets[uuid].position.set((Math.random() * 1000) - 500, (Math.random() * 1000) - 500);
+        let pos = Utils.getRandomPosition(this.pockets, Pocket.RADIUS, World.SIZE);
+        this.pockets[uuid].position.set(pos.x, pos.y);
 
         for(let i = 0; i < this.onResetPocketCallbacks.length; i++){
 			this.onResetPocketCallbacks[i](uuid);

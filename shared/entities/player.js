@@ -2,6 +2,7 @@
 
 import Vector2 from '../math/vector2.js';
 import Utils from '../math/utils.js';
+import World from '../world.js';
 
 class Player{
     static RADIUS = 16;
@@ -64,6 +65,18 @@ class Player{
 
         this.position.add(this.velocity);
 
+        if(this.position.x < 0){
+            this.position.x += World.SIZE;
+        }else if(this.position.x > World.SIZE){
+            this.position.x -= World.SIZE;
+        }
+
+        if(this.position.y < 0){
+            this.position.y += World.SIZE;
+        }else if(this.position.y > World.SIZE){
+            this.position.y -= World.SIZE;
+        }
+
         for(let p in this.world.players){
             let other = this.world.players[p];
             if(other.uuid === this.uuid) continue;
@@ -72,15 +85,9 @@ class Player{
 
         for(let p in this.world.pockets){
             let other = this.world.pockets[p];
-            //console.log(other);
-            //console.log(this.position);
             let dist = this.position.distance(other.position);
-            //at 36 distance and above, gravity scale = 0
-            //at 0 distance, gravity scale = 1
-            //console.log(dist);
             let s = 1 - (dist / 42);
             if(s > 0){
-                //console.log(s);
                 let dir = this.position.clone().sub(other.position).normalize();
                 let vel = dir.mult(new Vector2(s * 4, s * 4));
                 this.velocity.sub(new Vector2(vel.x, vel.y));
