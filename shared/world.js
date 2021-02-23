@@ -2,6 +2,8 @@
 
 import Utils from '../shared/math/utils.js';
 import Vector2 from '../shared/math/vector2.js';
+import Entity from '../shared/entities/entity.js';
+import Player from '../shared/entities/player.js';
 import Pocket from '../shared/entities/pocket.js';
 
 class World{
@@ -71,9 +73,54 @@ class World{
         return this.pockets[uuid];
     }
 
+    getRandomPlayerPosition(){
+        let collection = [];
+        for(let p in this.player){
+            collection.push(this.players[p]);
+        }
+        for(let p in this.pockets){
+            collection.push(this.pockets[p]);
+        }
+        return this.getRandomPosition(collection, Entity.PLAYER_RADIUS);
+    }
+
+    getRandomPocketPosition(){
+        let collection = [];
+        for(let p in this.player){
+            collection.push(this.players[p]);
+        }
+        for(let p in this.pockets){
+            collection.push(this.pockets[p]);
+        }
+        return this.getRandomPosition(collection, Entity.POCKET_RADIUS);
+    }
+
+    getRandomPosition(collection, radius){
+        let rX = (radius * 2) + (Math.random() * World.SIZE) - (radius * 4);
+        let rY = (radius * 2) + (Math.random() * World.SIZE) - (radius * 4);
+        let pos = new Vector2(rX, rY);
+        let canSpawn = false;
+        while(canSpawn === false){
+            for(let j in collection){
+                let other = collection[j];
+                let otherRadius = other.radius;
+                let dist = pos.distance(other.position);
+                if(dist < (radius + otherRadius) + 8){
+                    rX = (radius * 2) + (Math.random() * World.SIZE) - (radius * 4);
+                    rY = (radius * 2) + (Math.random() * World.SIZE) - (radius * 4);
+                    pos = new Vector2(rX, rY);
+                    break;
+                }
+            }
+            canSpawn = true;
+        }
+        return pos;
+    }
+
     respawnPlayer(uuid){
         let player = this.getPlayer(uuid);
-        player.position.set((Math.random() * World.SIZE), (Math.random() * World.SIZE));
+        let pos = this.getRandomPlayerPosition();
+        player.position.set(pos.x, pos.y);
         player.attacker = null;
         
         for(let i = 0; i < this.onRespawnPlayerCallbacks.length; i++){
@@ -82,7 +129,7 @@ class World{
     }
 
     resetPocket(uuid){
-        let pos = Utils.getRandomPosition(this.pockets, Pocket.RADIUS, World.SIZE);
+        let pos = this.getRandomPocketPosition();
         this.pockets[uuid].position.set(pos.x, pos.y);
 
         for(let i = 0; i < this.onResetPocketCallbacks.length; i++){

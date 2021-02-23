@@ -6,6 +6,7 @@ import {v4 as UUID} from 'uuid';
 import Utils from '../shared/math/utils.js';
 import Vector2 from '../shared/math/vector2.js';
 import World from '../shared/world.js';
+import Entity from '../shared/entities/entity.js';
 import Player from '../shared/entities/player.js';
 import Pocket from '../shared/entities/pocket.js';
 
@@ -48,7 +49,7 @@ class Server{
                     let dX = -Math.cos(player.angle);
                     let dY = -Math.sin(player.angle);
 
-                    player.setVelocity(new Vector2(dX * (player.charge * 32), dY * (player.charge * 32)));
+                    player.setVelocity(new Vector2(dX * (player.charge * Player.FORCE), dY * (player.charge * Player.FORCE)));
                     player.isCharging = false;
                     player.charge = 0;
                     player.attacker = null;
@@ -62,16 +63,6 @@ class Server{
                     player.angle = angleRad;
                 }
             });
-
-            // socket.on('player-shot', (pack) => {
-            //     let player = this.world.getPlayer(pack.uuid);
-            //     if(player){
-            //         let dX = -Math.cos(pack.angle);
-            //         let dY = -Math.sin(pack.angle);
-
-            //         player.setVelocity(new Vector2(dX * (pack.charge * 32), dY * (pack.charge * 32)));
-            //     }
-            // });
 
             socket.on('disconnect', () => {
                 this.onLeave(socket.uuid);
@@ -142,10 +133,10 @@ class Server{
             this.io.emit('update-leaderboard', {});
         });
 
-        for(let i = 0; i < 100; i++){
+        for(let i = 0; i < 50; i++){
             
-            let pos = Utils.getRandomPosition(this.world.pockets, Pocket.RADIUS, World.SIZE);
-            let pocket = new Pocket(UUID(), new Vector2(pos.x, pos.y));
+            let pos = this.world.getRandomPocketPosition();
+            let pocket = new Pocket(UUID(), this.world, pos);
             this.world.addPocket(pocket);
         }
     }
@@ -166,7 +157,8 @@ class Server{
         console.log('Client [' + uuid + '] joined!');
 
         // create a player object and add it to the world
-        let player = new Player(uuid, this.world, pack.name, pack.color, new Vector2((Math.random() * World.SIZE), (Math.random() * World.SIZE)));
+        let pos = this.world.getRandomPlayerPosition();
+        let player = new Player(uuid, this.world, pack.name, pack.color, pos);
         //player.velocity.set((Math.random() * 10) - 5, (Math.random() * 10) - 5);
         if(this.world.addPlayer(player)){
             // send client current world state

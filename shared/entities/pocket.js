@@ -1,13 +1,13 @@
 'use strict';
 
 import Vector2 from '../math/vector2.js';
+import Entity from '../entities/entity.js';
 
-class Pocket{
-    static RADIUS = 20;
+class Pocket extends Entity{
+    constructor(uuid, world, position){
+        super(uuid, world, position);
 
-    constructor(uuid, position){
-        this.uuid = uuid;
-        this.position = position;
+        this.radius = Entity.POCKET_RADIUS;
     }
 
     pack(){

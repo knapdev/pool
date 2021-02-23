@@ -4,6 +4,7 @@ import Utils from '../../shared/math/utils.js';
 import Vector2 from "../../shared/math/vector2.js";
 
 import World from "../../shared/world.js";
+import Entity from '../../shared/entities/entity.js';
 import Player from "../../shared/entities/player.js";
 
 import Mouse from '../lib/mouse.js';
@@ -105,7 +106,7 @@ class Client{
 
                     for(let i in pack.pockets){
                         let other = pack.pockets[i];
-                        let pocket = new Pocket(other.uuid, new Vector2(other.position.x, other.position.y));
+                        let pocket = new Pocket(other.uuid, this.world, new Vector2(other.position.x, other.position.y));
                         pocket.unpack(other);
                         if(this.world.addPocket(pocket)){
                         }
@@ -239,20 +240,20 @@ class Client{
         for(let i in this.world.pockets){
             let pocket = this.world.pockets[i];
             let x = (pocket.position.x - this.camPos.x) % World.SIZE;
-            if(x < -Pocket.RADIUS*2){
+            if(x < -Entity.POCKET_RADIUS*2){
                 x = x + World.SIZE;
-            }else if(x > window.innerWidth + Pocket.RADIUS*2){
+            }else if(x > window.innerWidth + Entity.POCKET_RADIUS*2){
                 x = x - World.SIZE;
             }
             let y = (pocket.position.y - this.camPos.y) % World.SIZE;
-            if(y < -Pocket.RADIUS*2){
+            if(y < -Entity.POCKET_RADIUS*2){
                 y = y + World.SIZE;
-            }else if(y > window.innerHeight + Pocket.RADIUS*2){
+            }else if(y > window.innerHeight + Entity.POCKET_RADIUS*2){
                 y = y - World.SIZE;
             }
             this.context.fillStyle = 'rgb(0, 0, 0)';
             this.context.beginPath();
-            this.context.ellipse(x, y, Pocket.RADIUS, Pocket.RADIUS, 0, 0, Utils.degToRad(360), true);
+            this.context.ellipse(x, y, Entity.POCKET_RADIUS, Entity.POCKET_RADIUS, 0, 0, Utils.degToRad(360), true);
             this.context.lineWidth = 4;
             this.context.stroke();
         }
@@ -260,20 +261,20 @@ class Client{
         for(let i in this.world.players){
             let player = this.world.players[i];
             let x = (player.position.x - this.camPos.x) % World.SIZE;
-            if(x < -Player.RADIUS*2){
+            if(x < -Entity.PLAYER_RADIUS*2){
                 x = x + World.SIZE;
-            }else if(x > window.innerWidth + Player.RADIUS*2){
+            }else if(x > window.innerWidth + Entity.PLAYER_RADIUS*2){
                 x = x - World.SIZE;
             }
             let y = (player.position.y - this.camPos.y) % World.SIZE;
-            if(y < -Player.RADIUS*2){
+            if(y < -Entity.PLAYER_RADIUS*2){
                 y = y + World.SIZE;
-            }else if(y > window.innerHeight + Player.RADIUS*2){
+            }else if(y > window.innerHeight + Entity.PLAYER_RADIUS*2){
                 y = y - World.SIZE;
             }
             this.context.fillStyle = 'rgb(' + player.color.r + ', ' + player.color.g + ', ' + player.color.b + ')';
             this.context.beginPath();
-            this.context.ellipse(x, y, Player.RADIUS, Player.RADIUS, 0, 0, Utils.degToRad(360), true);
+            this.context.ellipse(x, y, Entity.PLAYER_RADIUS, Entity.PLAYER_RADIUS, 0, 0, Utils.degToRad(360), true);
             this.context.fill();
         }
 
@@ -283,15 +284,15 @@ class Client{
             startDist += (48 * player.charge);
             this.context.save();
             let x = (player.position.x - this.camPos.x) % World.SIZE;
-            if(x < -Player.RADIUS*2){
+            if(x < -Entity.PLAYER_RADIUS*2){
                 x = x + World.SIZE;
-            }else if(x > window.innerWidth + Player.RADIUS*2){
+            }else if(x > window.innerWidth + Entity.PLAYER_RADIUS*2){
                 x = x - World.SIZE;
             }
             let y = (player.position.y - this.camPos.y) % World.SIZE;
-            if(y < -Player.RADIUS*2){
+            if(y < -Entity.PLAYER_RADIUS*2){
                 y = y + World.SIZE;
-            }else if(y > window.innerHeight + Player.RADIUS*2){
+            }else if(y > window.innerHeight + Entity.PLAYER_RADIUS*2){
                 y = y - World.SIZE;
             }
             this.context.translate(x, y);

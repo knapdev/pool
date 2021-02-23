@@ -3,11 +3,12 @@
 import Vector2 from '../math/vector2.js';
 import Utils from '../math/utils.js';
 import World from '../world.js';
+import Entity from '../entities/entity.js';
 
-class Player{
-    static RADIUS = 16;
+class Player extends Entity{
     static CHARGE_RATE = 1.25;
     static COLORS = [];
+    static FORCE = 48;
 
     static setupColors(){
         //Setup colors
@@ -28,18 +29,18 @@ class Player{
     }
 
     constructor(uuid, world, name, color, position){
-        this.uuid = uuid;
-        this.world = world;
+        super(uuid, world, position);
 
         this.name = name;
         this.color = color;
         this.score = 0;
 
-        this.position = position;
         this.velocity = new Vector2();
 
         this.charge = 0;
         this.angle = 0; // radians
+
+        this.radius = Entity.PLAYER_RADIUS;
 
         this.isMoving = false;
         this.isCharging = false;
@@ -121,9 +122,9 @@ class Player{
 
     resolveCollision(other){
         let dist = this.position.distance(other.position);       
-        if(dist < (Player.RADIUS * 2)){
+        if(dist < (Entity.PLAYER_RADIUS * 2)){
             //correction
-            let overlap = ((dist) - (Player.RADIUS * 2)) * 0.5;
+            let overlap = ((dist) - (Entity.PLAYER_RADIUS * 2)) * 0.5;
             let norm = this.position.clone().sub(other.position);
             let correction = norm.clone().normalize().mult(new Vector2(overlap, overlap));
             other.position = other.position.add(correction);
