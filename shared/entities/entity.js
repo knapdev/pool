@@ -1,8 +1,8 @@
 'use strict';
 
 class Entity{
-    static PLAYER_RADIUS = 16;
-    static POCKET_RADIUS = 20;
+    static PLAYER_RADIUS = 20;
+    static POCKET_RADIUS = 24;
 
     constructor(uuid, world, position){
         this.uuid = uuid;

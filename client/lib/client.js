@@ -32,6 +32,7 @@ class Client{
         this.selected_color_index = 0;
 
         this.image = null;
+        this.sfx = {};
 
         this.connect();
     }
@@ -48,10 +49,16 @@ class Client{
     connect(){
 
         this.image = new Image();
-        this.image.src = './client/res/dude.png';
+        this.image.src = './client/res/beetle.png';
         this.image.onload = function(){
             console.log('image loaded');
         };
+
+        this.sfx['boop'] = new Audio('./client/res/boop.mp3');
+        //this.sfx['boop'].src = './client/res/boop.mp3';
+        // this.sfx['boop'].onload = function(){
+        //     console.log('boopSFX loaded');
+        // };
 
         Player.setupColors();
         this.updateColorBox();
@@ -153,6 +160,15 @@ class Client{
 
                     this.socket.on('update-leaderboard', (pack) => {
                         this.updateLeaderboard();
+                    });
+
+                    this.socket.on('play-sound', (pack) => {
+                        let player = this.world.getPlayer(this.playerUUID);
+                        let dist = player.position.distance(pack.pos);
+                        if(dist < 300){
+                            console.log('I hear ya!');
+                            this.sfx[pack.id].play();
+                        }                       
                     });
 
                     this.start();
@@ -297,7 +313,7 @@ class Client{
             }
             this.context.translate(x, y);
             this.context.rotate(player.angle + Utils.degToRad(-90));
-            this.context.translate(-16, startDist);
+            this.context.translate(-this.image.width/2, startDist);
             this.context.drawImage(this.image, 0, 0);
             this.context.restore();
         }

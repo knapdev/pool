@@ -19,6 +19,7 @@ class World{
         this.onResetPocketCallbacks = [];
         this.onSetScoreCallbacks = [];
         this.onUpdateLeaderboardCallbacks = [];
+        this.onPlaySoundCallbacks = [];
     }
 
     tick(delta){
@@ -152,6 +153,12 @@ class World{
 		}
     }
 
+    playSound(id, pos){
+        for(let i = 0; i < this.onPlaySoundCallbacks.length; i++){
+			this.onPlaySoundCallbacks[i](id, pos);
+		}
+    }
+
     registerOnRespawnPlayerCallback(callback){
 		this.onRespawnPlayerCallbacks.push(callback);
 	}
@@ -178,6 +185,13 @@ class World{
 	}
 	unregisterOnUpdateLeaderboardCallback(callback){
 		this.onUpdateLeaderboardCallbacks.remove(callback);
+	}
+
+    registerOnPlaySoundCallback(callback){
+		this.onPlaySoundCallbacks.push(callback);
+	}
+	unregisterOnPlaySoundCallback(callback){
+		this.onPlaySoundCallbacks.remove(callback);
 	}
 }
 

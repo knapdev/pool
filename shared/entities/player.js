@@ -87,10 +87,11 @@ class Player extends Entity{
         for(let p in this.world.pockets){
             let other = this.world.pockets[p];
             let dist = this.position.distance(other.position);
-            let s = 1 - (dist / 42);
+            let threshold = 64;
+            let s = 1 - (dist / threshold);
             if(s > 0){
                 let dir = this.position.clone().sub(other.position).normalize();
-                let vel = dir.mult(new Vector2(s * 4, s * 4));
+                let vel = dir.mult(new Vector2(s * 6, s * 6));
                 this.velocity.sub(new Vector2(vel.x, vel.y));
 
                 if(dist <= 4){
@@ -154,6 +155,8 @@ class Player extends Entity{
 
             this.attacker = other.uuid;
             other.attacker = this.uuid;
+
+            this.world.playSound('boop', {x: this.position.x, y: this.position.y});
         }
     }
 

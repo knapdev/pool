@@ -133,6 +133,13 @@ class Server{
             this.io.emit('update-leaderboard', {});
         });
 
+        this.world.registerOnPlaySoundCallback((id, pos) => {
+            this.io.emit('play-sound', {
+                id: id,
+                pos: pos
+            });
+        });
+
         for(let i = 0; i < 50; i++){
             
             let pos = this.world.getRandomPocketPosition();
